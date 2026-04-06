@@ -147,9 +147,3 @@ app/
     ├── Task.php                       # Task model with scopes
     └── User.php                       # User model with roles
 ```
-
-## Running Tests
-
-```bash
-php artisan test
-```
