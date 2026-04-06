@@ -1,58 +1,155 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Mini Task Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A task management application built with Laravel 13 featuring both Web (Blade) and RESTful API interfaces, Sanctum authentication, background job reminders, and role-based access control.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **User Authentication** - Registration & login (session-based for web, token-based for API via Sanctum)
+- **Task CRUD** - Create, read, update, delete tasks with title, description, status, and due date
+- **Role-Based Access** - Admin sees all tasks, regular users see only their own
+- **Search & Filter** - Filter tasks by status and due date
+- **Background Job** - Scheduled daily job sends email reminders for tasks due tomorrow
+- **RESTful API** - Full API with proper JSON responses and HTTP status codes
+- **Pagination** - Both web and API responses are paginated
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup Instructions
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Prerequisites
+- PHP 8.3+
+- Composer
+- MySQL / SQLite
+- Node.js & npm (optional - Tailwind CSS CDN used)
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Installation
 
 ```bash
-composer require laravel/boost --dev
+# Clone the repository
+git clone <repository-url>
+cd task-management
 
-php artisan boost:install
+# Install PHP dependencies
+composer install
+
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Configure your database in .env
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=task_management
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# Run migrations
+php artisan migrate
+
+# Seed the database (creates admin & test user with sample tasks)
+php artisan db:seed
+
+# Start the development server
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Default Users (after seeding)
 
-## Contributing
+| Role  | Email              | Password   |
+|-------|--------------------|------------|
+| Admin | admin@example.com  | password   |
+| User  | user@example.com   | password   |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Queue Worker (for email reminders)
 
-## Code of Conduct
+```bash
+# Run the queue worker
+php artisan queue:work
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# The reminder job is scheduled to run daily at 08:00
+# To test the scheduler locally:
+php artisan schedule:work
+```
 
-## Security Vulnerabilities
+## API Endpoints
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+All API endpoints require a Bearer token (Sanctum). Include header: `Authorization: Bearer {token}`
 
-## License
+### Authentication
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Method | Endpoint             | Description              |
+|--------|---------------------|--------------------------|
+| POST   | `/api/auth/register` | Register a new user      |
+| POST   | `/api/auth/login`    | Login and get token      |
+| POST   | `/api/auth/logout`   | Logout (revoke token)    |
+
+### Tasks (requires authentication)
+
+| Method | Endpoint            | Description               |
+|--------|---------------------|---------------------------|
+| GET    | `/api/tasks`        | List tasks (paginated)    |
+| POST   | `/api/tasks`        | Create a new task         |
+| GET    | `/api/tasks/{id}`   | Get a single task         |
+| PUT    | `/api/tasks/{id}`   | Update a task             |
+| DELETE | `/api/tasks/{id}`   | Delete a task             |
+
+### Query Parameters (GET /api/tasks)
+
+| Parameter  | Description                              |
+|------------|------------------------------------------|
+| `status`   | Filter by status: pending, in-progress, completed |
+| `due_date` | Filter by due date (YYYY-MM-DD)          |
+| `page`     | Page number for pagination               |
+
+### Example API Usage
+
+```bash
+# Register
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John","email":"john@example.com","password":"password","password_confirmation":"password"}'
+
+# Login
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password"}'
+
+# Create task
+curl -X POST http://localhost:8000/api/tasks \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"My Task","status":"pending","due_date":"2026-04-10"}'
+
+# List tasks with filter
+curl http://localhost:8000/api/tasks\?status\=pending \
+  -H "Authorization: Bearer {token}"
+```
+
+## Project Structure
+
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/
+│   │   │   ├── AuthController.php    # API authentication
+│   │   │   └── TaskController.php    # API task CRUD
+│   │   └── TaskController.php        # Web task CRUD
+│   └── Requests/
+│       ├── StoreTaskRequest.php       # Create task validation
+│       └── UpdateTaskRequest.php      # Update task validation
+├── Jobs/
+│   └── SendTaskDueReminders.php       # Background reminder job
+├── Mail/
+│   └── TaskDueReminderMail.php        # Reminder email mailable
+└── Models/
+    ├── Task.php                       # Task model with scopes
+    └── User.php                       # User model with roles
+```
+
+## Running Tests
+
+```bash
+php artisan test
+```
